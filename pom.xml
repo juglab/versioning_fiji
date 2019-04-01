@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+		http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>25.0.0</version>
+		<relativePath />
+	</parent>
+
+	<groupId>fiji.sc</groupId>
+	<artifactId>versioning</artifactId>
+	<version>0.1.0-SNAPSHOT</version>
+
+	<name>ImageJ Versioning</name>
+	<description>Versioning of local ImageJ installation</description>
+	<url>http://imagej.net/</url>
+	<inceptionYear>2019</inceptionYear>
+	<organization>
+		<name>CSBDresden</name>
+		<url>http://csbdresden.de/</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>Simplified BSD License</name>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<!-- See https://imagej.net/Team -->
+		<developer>
+			<id>frauzufall</id>
+			<name>Deborah Schmidt</name>
+			<url>http://imagej.net/User:Frauzufall</url>
+			<roles>
+				<role>founder</role>
+				<role>lead</role>
+				<role>developer</role>
+				<role>debugger</role>
+				<role>reviewer</role>
+				<role>support</role>
+				<role>maintainer</role>
+			</roles>
+		</developer>
+	</developers>
+	<contributors>
+		<contributor>
+			<name>None</name>
+		</contributor>
+	</contributors>
+
+	<mailingLists>
+		<mailingList>
+			<name>Image.sc Forum</name>
+			<archive>https://forum.image.sc/</archive>
+		</mailingList>
+	</mailingLists>
+
+	<scm>
+		<connection>scm:git:git://github.com/juglab/versioning_fiji</connection>
+		<developerConnection>scm:git:git@github.com:juglab/versioning_fiji</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/juglab/versioning_fiji</url>
+	</scm>
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>https://github.com/juglab/versioning_fiji/issues</url>
+	</issueManagement>
+	<ciManagement>
+		<system>None</system>
+	</ciManagement>
+
+	<properties>
+		<package-name>sc.fiji</package-name>
+		<main-class>sc.fiji.versioning.command.Versioning</main-class>
+		<license.licenseName>bsd_2</license.licenseName>
+		<license.copyrightOwners>ImageJ</license.copyrightOwners>
+	</properties>
+
+	<repositories>
+		<repository>
+			<id>imagej.public</id>
+			<url>http://maven.imagej.net/content/groups/public</url>
+		</repository>
+	</repositories>
+
+	<dependencies>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej</artifactId>
+		</dependency>
+		<dependency>
+		  <groupId>org.eclipse.jgit</groupId>
+		  <artifactId>org.eclipse.jgit</artifactId>
+		  <version>5.2.1.201812262042-r</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.7.25</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-jcl</artifactId>
+			<version>1.7.25</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>

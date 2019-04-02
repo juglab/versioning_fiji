@@ -3,6 +3,7 @@ package sc.fiji.versioning.service;
 import net.imagej.ImageJService;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.scijava.command.CommandInfo;
+import org.scijava.plugin.Parameter;
 import org.scijava.plugin.PluginInfo;
 import sc.fiji.versioning.model.AppCommit;
 import sc.fiji.versioning.model.FileChange;
@@ -13,21 +14,41 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Service for getting class dependencies via asm.
+ * Service for verioning an ImageJ installation.
  *
  * @author Deborah Schmidt
  */
 public interface VersioningService extends ImageJService {
 
-	void commitCurrentStatus() throws Exception;
-	List<AppCommit> getCommits() throws Exception;
-	void restoreStatus(String id) throws Exception;
+	/**
+	 * Creates a commit including all changes made to the ImageJ
+	 * installation since the last commit
+	 * @throws Exception
+	 */
+	void commitCurrentChanges() throws Exception;
 
 	/**
-	 * @param id The id of the commit that will be merged with
+	 * Returns a list of all commits representing saved states of
+	 * the current ImageJ installation.
+	 * @return List of all commits
+	 * @throws Exception in case version management tool fails
+	 */
+	List<AppCommit> getCommits() throws Exception;
+
+	/**
+	 * Restores a commit and discards all saved ImageJ states
+	 * saved since this commit
+	 * @param id The id of the commit that will be restored
+	 * @throws Exception in case version management tool fails
+	 */
+	void restoreCommit(String id) throws Exception;
+
+	/**
+	 * Merges a commit with the next recent commit
+	 * @param id The id of the commit that will be merged
 	 * @throws Exception Exception in case version management tool fails
 	 */
-	void deleteStatus(String id) throws Exception;
+	void mergeCommitWithNext(String id) throws Exception;
 
 	/**
 	 * Returns all changes made to the current ImageJ installation
@@ -64,4 +85,15 @@ public interface VersioningService extends ImageJService {
 	 * @throws Exception in case version management tool fails
 	 */
 	void undoLastCommit() throws Exception;
+
+	/**
+	 * Restores the very first saved state of the current ImageJ installation
+	 * @throws Exception in case version management tool fails
+	 */
+	default void restoreInitialCommit() throws Exception {
+		restoreCommit(getCommits().get(0).id);
+	}
+
+	File getBaseDirectory();
+	void setBaseDirectory(File dir);
 }

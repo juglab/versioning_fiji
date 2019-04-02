@@ -3,6 +3,7 @@ package sc.fiji.versioning.service;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.scijava.Initializable;
 import org.scijava.app.AppService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -19,22 +20,29 @@ import java.util.List;
  * @author Deborah Schmidt
  */
 @Plugin(type = Service.class)
-public class GitVersioningService extends AbstractService implements VersioningService {
+public class GitVersioningService extends AbstractService implements VersioningService, Initializable, AutoCloseable {
 
 	@Parameter
 	AppService appService;
 
+	private File base;
 	private Git git;
 
 	@Override
-	public void commitCurrentStatus() throws IOException, GitAPIException {
+	public void initialize() {
+		base = appService.getApp().getBaseDirectory();
+	}
+
+	@Override
+	public void commitCurrentChanges() throws IOException, GitAPIException {
 		loadGit();
 		GitCommands.commitCurrentStatus(git);
 	}
 
 	private void loadGit() throws GitAPIException, IOException {
+		if(git != null && !git.getRepository().getDirectory().getParentFile().equals(base)) git = null;
 		if(git == null) {
-			git = GitCommands.initOrLoad(getBase());
+			git = GitCommands.initOrLoad(getBaseDirectory());
 		}
 	}
 
@@ -45,13 +53,13 @@ public class GitVersioningService extends AbstractService implements VersioningS
 	}
 
 	@Override
-	public void restoreStatus(String id) throws GitAPIException, IOException {
+	public void restoreCommit(String id) throws GitAPIException, IOException {
 		loadGit();
 		GitCommands.restoreStatus(git, id);
 	}
 
 	@Override
-	public void deleteStatus(String id) throws GitAPIException, IOException {
+	public void mergeCommitWithNext(String id) throws GitAPIException, IOException {
 		loadGit();
 		GitCommands.deleteStatus(git, id);
 	}
@@ -90,7 +98,18 @@ public class GitVersioningService extends AbstractService implements VersioningS
 		GitCommands.undoLastCommit(git);
 	}
 
-	private File getBase() {
-		return appService.getApp().getBaseDirectory();
+	@Override
+	public File getBaseDirectory() {
+		return base;
+	}
+
+	@Override
+	public void setBaseDirectory(File dir) {
+		base = dir;
+	}
+
+	@Override
+	public void close() {
+		git.close();
 	}
 }

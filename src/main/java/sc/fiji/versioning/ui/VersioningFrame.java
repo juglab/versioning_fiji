@@ -11,19 +11,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
 public class VersioningFrame extends JFrame implements Progress {
 
-	private final Icon savingIcon = new ImageIcon(this.getClass().getResource("/saving.gif"));
 	private VersioningService versioningService;
 
 	private JList commitList, commitDetails;
 	private List<AppCommit> data;
-	private JButton deleteBtn, restoreBtn, discardSelectedBtn, undoLastCommitBtn;
+	private JButton deleteBtn, restoreBtn, discardSelectedBtn, undoLastCommitBtn, renameBtn;
 	private Vector<AppCommit> commits;
 	private List<FileChange> changes;
 
@@ -43,7 +41,7 @@ public class VersioningFrame extends JFrame implements Progress {
 				commitList.setListData(commits);
 				new Thread(() -> {
 					try {
-						versioningService.commitCurrentStatus();
+						versioningService.commitCurrentChanges();
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -116,6 +114,7 @@ public class VersioningFrame extends JFrame implements Progress {
 			progress = new JLabel("Saving changes ..");
 			progress.setBackground(Color.red);
 		}
+
 		@Override
 		public Component getListCellRendererComponent(
 				JList<?> list,
@@ -146,11 +145,11 @@ public class VersioningFrame extends JFrame implements Progress {
 		return commitDetails;
 	}
 	private Component createRestoreBtn() {
-		Action action = new AbstractAction("Restore state") {
+		Action action = new AbstractAction("Restore commit") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					versioningService.restoreStatus(data.get(commitList.getSelectedIndex()).id);
+					versioningService.restoreCommit(data.get(commitList.getSelectedIndex()).id);
 					JOptionPane.showMessageDialog(null,
 							"Please restart the application.",
 							"Restart after restoring application status",
@@ -167,11 +166,11 @@ public class VersioningFrame extends JFrame implements Progress {
 	}
 
 	private Component createDeleteBtn() {
-		Action action = new AbstractAction("Delete state") {
+		Action action = new AbstractAction("Merge with next commit") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
-					versioningService.deleteStatus(data.get(commitList.getSelectedIndex()).id);
+					versioningService.mergeCommitWithNext(data.get(commitList.getSelectedIndex()).id);
 				} catch (Exception e1) {
 					e1.printStackTrace();
 				}
@@ -217,6 +216,7 @@ public class VersioningFrame extends JFrame implements Progress {
 			}
 		};
 		undoLastCommitBtn = new JButton(action);
+		undoLastCommitBtn.setEnabled(data.size() > 1);
 		return undoLastCommitBtn;
 	}
 
@@ -226,6 +226,7 @@ public class VersioningFrame extends JFrame implements Progress {
 			commits = getCommits();
 			commitList.setListData(commits);
 			commitList.setSelectedIndex(selected);
+			if(undoLastCommitBtn != null) undoLastCommitBtn.setEnabled(data.size() > 1);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

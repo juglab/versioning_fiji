@@ -27,28 +27,29 @@ import static sc.fiji.versioning.model.FileChange.versionPattern;
 
 public class GitCommands {
 
-	public static void commitCurrentStatus(Git git) throws GitAPIException {
-		System.out.println("git add .");
-		git.add().addFilepattern(".").call();
-		System.out.println("git add -u .");
-		git.add().setUpdate(true).addFilepattern(".").call();
+	static boolean debug = true;
 
+	public static void commitCurrentStatus(Git git) throws GitAPIException {
+		if(debug) System.out.println("git add .");
+		git.add().addFilepattern(".").call();
+		if(debug) System.out.println("git add -u .");
+		git.add().setUpdate(true).addFilepattern(".").call();
+		if(debug) getCurrentChanges(git);
 		String date = new SimpleDateFormat().format(new Date());
-		System.out.println("git commit -m \'" + date + "\'");
+		if(debug) System.out.println("git commit -m \'" + date + "\'");
 		git.commit().setMessage(date).call();
-		git.close();
 	}
 
 	public static List<AppCommit> getCommits(Git git) throws IOException, GitAPIException {
 		List<AppCommit> commits = new ArrayList<>();
 		if(git.getRepository().resolve(Constants.HEAD) == null) return commits;
 		RevCommit lastCom = null;
-		System.out.println("git log");
+		if(debug) System.out.println("git log");
 		Iterable<RevCommit> iterator = git.log().call();
 		List<RevCommit> result = new ArrayList();
 		iterator.forEach(c -> result.add(c));
 		Collections.reverse(result);
-		result.stream().map(commit -> "   " + commit).forEach(System.out::println);
+		if(debug) result.stream().map(commit -> "     " + commit).forEach(System.out::println);
 		for(RevCommit commit : result) {
 			AppCommit c = new AppCommit();
 			c.id = commit.getId().getName();
@@ -66,10 +67,17 @@ public class GitCommands {
 
 	public static Git initOrLoad(File localPath) throws GitAPIException, IOException {
 		try {
-			return Git.open(localPath);
+			Git git = Git.open(localPath);
+			if(!git.getRepository().getDirectory().getParentFile().equals(localPath)) {
+				System.out.println("Preventing git from loading existing git repository in "
+						+ git.getRepository().getDirectory().getParentFile()
+						+ ", creating new repository in " + localPath);
+				throw new RepositoryNotFoundException(localPath);
+			}
+			return git;
 		}
 		catch(RepositoryNotFoundException e) {
-			System.out.println("git init " + localPath);
+			if(debug) System.out.println("git init " + localPath);
 			return Git.init().setDirectory(localPath).call();
 		}
 	}
@@ -82,7 +90,7 @@ public class GitCommands {
 			tree2 = new EmptyTreeIterator();
 		List<FileChange> changes = new ArrayList<>();
 		AbstractTreeIterator tree1 = getTree(git, commit1);
-		System.out.println("git diff " + tree2.hashCode() + " " + tree1.hashCode());
+		if(debug) System.out.println("git diff " + (commit2 == null ? "NULL" : commit2.getName()) + " " + commit1.getName());
 		git.diff().setOldTree(tree2).setNewTree(tree1).call().forEach(entry -> {
 			FileChange change = new FileChange();
 			change.status = toStatus(entry.getChangeType());
@@ -91,6 +99,7 @@ public class GitCommands {
 			changes.add(change);
 		});
 		detectVersionChanges(changes);
+		if(debug) changes.stream().map(change -> "     " + change).forEach(System.out::println);
 		return changes;
 	}
 
@@ -126,7 +135,7 @@ public class GitCommands {
 	}
 
 	public static boolean changedFiles(Git git) throws GitAPIException {
-		System.out.println("git status");
+		if(debug) System.out.println("git status");
 		return git.status().call().hasUncommittedChanges();
 	}
 
@@ -150,9 +159,9 @@ public class GitCommands {
 	}
 
 	public static void restoreStatus(Git git, String id) throws GitAPIException {
-		System.out.println("git reset --hard " + id);
+		if(debug) System.out.println("git reset --hard " + id);
 		git.reset().setMode(ResetCommand.ResetType.HARD).setRef(id).call();
-		System.out.println("git clean -f -d");
+		if(debug) System.out.println("git clean -f -d");
 		git.clean().setForce(true).setCleanDirectories(true).call();
 	}
 
@@ -168,17 +177,17 @@ public class GitCommands {
 					try {
 						if(commit.getName().startsWith(step.getCommit().name())) {
 							foundStep = true;
-							System.out.println("   pick " + step.getCommit());
+							if(debug) System.out.println("     pick " + step.getCommit());
 						} else {
 							if(foundStep) {
-								System.out.println("   squash " + step.getCommit());
+								if(debug) System.out.println("     squash " + step.getCommit());
 								step.setAction(RebaseTodoLine.Action.SQUASH);
 //								RevCommit c = walk.parseCommit(step.getCommit().toObjectId());
 //								System.out.println("Found step " + c.getFullMessage());
 //								name = c.getFullMessage();
 								foundStep = false;
 							} else {
-								System.out.println("   pick " + step.getCommit());
+								if(debug) System.out.println("     pick " + step.getCommit());
 								step.setAction(RebaseTodoLine.Action.PICK);
 							}
 						}
@@ -192,13 +201,13 @@ public class GitCommands {
 				return oldMessage;
 			}
 		};
-		System.out.println("git rebase -i " + commit.getParent(0).hashCode());
+		if(debug) System.out.println("git rebase -i " + commit.getParent(0).getName());
 		git.rebase().setUpstream(commit.getParent(0)).runInteractively(handler).call();
 	}
 
 	public static List<FileChange> getCurrentChanges(Git git) throws GitAPIException {
 		List<FileChange> changes = new ArrayList<>();
-		System.out.println("git status");
+		if(debug) System.out.println("git status");
 		Status status = git.status().call();
 
 		//added
@@ -229,6 +238,13 @@ public class GitCommands {
 			change.newPath = file;
 			changes.add(change);
 		});
+		status.getChanged().forEach(file -> {
+			FileChange change = new FileChange();
+			change.status = FileChange.Status.MODIFY;
+			change.oldPath = file;
+			change.newPath = file;
+			changes.add(change);
+		});
 
 		//deleted
 		status.getRemoved().forEach(file -> {
@@ -243,30 +259,31 @@ public class GitCommands {
 			change.oldPath = file;
 			changes.add(change);
 		});
+		if(debug) changes.stream().map(change -> "     " + change).forEach(System.out::println);
 		return changes;
 	}
 
 	public static void discardChange(Git git, FileChange fileChange) throws GitAPIException {
 		if(fileChange.status.equals(FileChange.Status.DELETE)
 			|| fileChange.status.equals(FileChange.Status.MODIFY)) {
-			System.out.println("git checkout HEAD~1 " + fileChange.oldPath);
+			if(debug) System.out.println("git checkout HEAD~1 " + fileChange.oldPath);
 			git.checkout().addPath(fileChange.oldPath).setStartPoint("HEAD~1").call();
 //			git.reset().setMode(ResetCommand.ResetType.HARD).setRef("HEAD~1").addPath(fileChange.oldPath).call();
 		}
 		else if(fileChange.status.equals(FileChange.Status.ADD)) {
-			System.out.println("git rm " + fileChange.newPath);
+			if(debug) System.out.println("git rm " + fileChange.newPath);
 			git.rm().addFilepattern(fileChange.newPath).call();
 		}
 		else if(fileChange.status.equals(FileChange.Status.VERSION_CHANGE)) {
-			System.out.println("git rm " + fileChange.newPath);
-			System.out.println("git checkout HEAD~1 " + fileChange.oldPath);
+			if(debug) System.out.println("git rm " + fileChange.newPath);
+			if(debug) System.out.println("git checkout HEAD~1 " + fileChange.oldPath);
 			git.rm().addFilepattern(fileChange.newPath).call();
 			git.checkout().addPath(fileChange.oldPath).setStartPoint("HEAD~1").call();
 		}
 	}
 
 	public static void commitAmend(Git git) throws GitAPIException {
-		System.out.println("git commit --amend");
+		if(debug) System.out.println("git commit --amend");
 		git.commit().setAmend(true).setMessage("").call();
 	}
 

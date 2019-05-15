@@ -8,6 +8,8 @@ import sc.fiji.versioning.model.FileChange;
 import sc.fiji.versioning.service.VersioningService;
 
 import javax.swing.*;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
@@ -25,34 +27,60 @@ public class VersioningFrame extends JFrame implements Progress {
 	private Vector<AppCommit> commits;
 	private List<FileChange> changes;
 
+	private VisualStatus checkForChanges, checkForCrash;
+
+	private static final String frameTitle = "Versioning";
+	private static final String panelTitle = "Managing your local installation";
+	private static final String checkForChangesStr = "Checking for changes..";
+	private static final String savingChangesStr = "Saving changes ..";
+	private static final String uncommittedChangesStr = "Uncommitted changes";
+	private static final String restoreBtnTitle = "Restore commit";
+	private static final String deleteBtnTitle = "Merge with next commit";
+	private static final String restartFrameTitle = "Please restart the application.";
+	private static final String restartFrameText = "Restart after restoring application status";
+	private static final String discardSelectedBtnTitle = "Discard selected";
+	private static final String undoLastCommitBtnTitle = "Undo last commit";
+	private static final String changesPresentStr = "Unsaved changes in Fiji installation.";
+	private static final String noChangesPresentStr = "No unsaved changes in Fiji installation.";
+
 	public VersioningFrame(VersioningService versioningService) {
-		super("Versioning");
+		super(frameTitle);
 		this.versioningService = versioningService;
 		setMinimumSize(new Dimension(800, 400));
 		setContentPane(createContent());
 	}
 
-	public void saveCurrentState() {
+	public void checkForChanges() {
+		checkForChanges.setStatus(VisualStatus.StatusType.RUNNING, checkForChangesStr);
 		try {
 			if(versioningService.hasUnsavedChanges()) {
-				System.out.println("   unsaved changes");
-				Vector<AppCommit> commits = this.commits;
-				commits.add(new AppCommitInProgress());
-				commitList.setListData(commits);
-				new Thread(() -> {
-					try {
-						versioningService.commitCurrentChanges();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					updateCommits();
-				}).start();
+				checkForChanges.setStatus(VisualStatus.StatusType.WARNING, changesPresentStr);
+				System.out.println("     unsaved changes");
+				checkForChanges.setStatus(VisualStatus.StatusType.RUNNING, savingChangesStr);
+				saveChanges();
 			} else {
-				System.out.println("   no unsaved changes");
+				checkForChanges.setStatus(VisualStatus.StatusType.DONE, noChangesPresentStr);
+				System.out.println("     no unsaved changes");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void saveChanges() {
+		Vector<AppCommit> commits = this.commits;
+		commits.add(new AppCommitInProgress());
+		commitList.setListData(commits);
+		commitList.setSelectedIndex(commits.size()-1);
+		new Thread(() -> {
+			try {
+				versioningService.commitCurrentChanges();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			updateCommits();
+			checkForChanges.setStatus(VisualStatus.StatusType.DONE, noChangesPresentStr);
+		}).start();
 	}
 
 	private void close() {
@@ -62,13 +90,41 @@ public class VersioningFrame extends JFrame implements Progress {
 	private Container createContent() {
 		JPanel panel = new JPanel();
 		panel.setBorder(BorderFactory.createEmptyBorder(15,15,15,15));
-		panel.setLayout(new MigLayout("gap 15px, wmin 400px, hmin 60px, fill", "[][grow][]", "[grow][]"));
+		panel.setLayout(new MigLayout("gap 15px, wmin 400px, hmin 60px, fill", "[][grow][]", "[][][grow][]"));
+		panel.add(createTitle(), "span, wrap");
+		panel.add(createChangeCheck(), "span, wrap");
+		panel.add(createCommitView(), "span, wrap, grow");
+		panel.add(createFooter(), "span");
+		return panel;
+	}
+
+	private static Component createTitle() {
+		return createHTMLText("<html><h2>" + panelTitle + "</h2></html>");
+	}
+
+	private static JEditorPane createHTMLText(String text) {
+		JEditorPane component =
+				new JEditorPane(new HTMLEditorKit().getContentType(), text);
+		component.setEditable(false);
+		component.setOpaque(false);
+		Font font = UIManager.getFont("Label.font");
+		String bodyRule = "body { font-family: " + font.getFamily() + "; " +
+				"font-size: " + font.getSize() + "pt; }";
+		((HTMLDocument)component.getDocument()).getStyleSheet().addRule(bodyRule);
+		return component;
+	}
+
+	private Component createChangeCheck() {
+		checkForChanges = new VisualStatus();
+		checkForChanges.setStatus(VisualStatus.StatusType.IDLE, checkForChangesStr);
+		return checkForChanges;
+	}
+
+	private Component createCommitView() {
+		JPanel panel = new JPanel();
+		panel.setLayout(new MigLayout("fill"));
 		panel.add(scroll(createCommitList()), "grow");
-		panel.add(scroll(createCommitDetailView()), "grow, span, wrap");
-		panel.add(createRestoreBtn());
-		panel.add(createDeleteBtn());
-		panel.add(createUndoLastCommitBtn());
-		panel.add(createDiscardSelectedBtn());
+		panel.add(scroll(createCommitDetailView()), "grow, span");
 		return panel;
 	}
 
@@ -85,6 +141,7 @@ public class VersioningFrame extends JFrame implements Progress {
 			if(selected < 0 || selected >= data.size()) {
 				restoreBtn.setEnabled(false);
 				deleteBtn.setEnabled(false);
+				commitDetails.setListData(new Vector());
 				return;
 			}
 			changes = data.get(selected).changes;
@@ -111,7 +168,7 @@ public class VersioningFrame extends JFrame implements Progress {
 
 		public MyDefaultListCellRenderer() {
 			super();
-			progress = new JLabel("Saving changes ..");
+			progress = new JLabel(uncommittedChangesStr);
 			progress.setBackground(Color.red);
 		}
 
@@ -131,6 +188,7 @@ public class VersioningFrame extends JFrame implements Progress {
 		}
 
 
+
 	}
 	private Component createCommitDetailView() {
 		commitDetails = new JList();
@@ -144,15 +202,25 @@ public class VersioningFrame extends JFrame implements Progress {
 		});
 		return commitDetails;
 	}
+
+	private Component createFooter() {
+		JPanel panel = new JPanel();
+		panel.add(createRestoreBtn());
+		panel.add(createDeleteBtn());
+		panel.add(createUndoLastCommitBtn());
+		panel.add(createDiscardSelectedBtn());
+		return panel;
+	}
+
 	private Component createRestoreBtn() {
-		Action action = new AbstractAction("Restore commit") {
+		Action action = new AbstractAction(restoreBtnTitle) {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
 					versioningService.restoreCommit(data.get(commitList.getSelectedIndex()).id);
 					JOptionPane.showMessageDialog(null,
-							"Please restart the application.",
-							"Restart after restoring application status",
+							restartFrameTitle,
+							restartFrameText,
 							JOptionPane.PLAIN_MESSAGE);
 					dispose();
 				} catch (Exception e1) {
@@ -166,7 +234,7 @@ public class VersioningFrame extends JFrame implements Progress {
 	}
 
 	private Component createDeleteBtn() {
-		Action action = new AbstractAction("Merge with next commit") {
+		Action action = new AbstractAction(deleteBtnTitle) {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
@@ -183,7 +251,7 @@ public class VersioningFrame extends JFrame implements Progress {
 	}
 
 	private Component createDiscardSelectedBtn() {
-		Action action = new AbstractAction("Discard selected") {
+		Action action = new AbstractAction(discardSelectedBtnTitle) {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {
@@ -204,7 +272,7 @@ public class VersioningFrame extends JFrame implements Progress {
 	}
 
 	private Component createUndoLastCommitBtn() {
-		Action action = new AbstractAction("Undo last commit") {
+		Action action = new AbstractAction(undoLastCommitBtnTitle) {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				try {

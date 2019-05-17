@@ -14,6 +14,8 @@ import org.scijava.Initializable;
 import org.scijava.Priority;
 import org.scijava.command.CommandInfo;
 import org.scijava.command.CommandService;
+import org.scijava.log.LogListener;
+import org.scijava.log.LogMessage;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -22,7 +24,7 @@ import sc.fiji.versioning.notification.NotificationService;
 import java.util.List;
 
 @Plugin(type = UpdaterUI.class, priority = Priority.HIGH)
-public class ToolbarHack implements UpdaterUI, Initializable {
+public class ToolbarHack implements UpdaterUI, Initializable, LogListener {
 
     @Parameter
     LogService logService;
@@ -34,8 +36,13 @@ public class ToolbarHack implements UpdaterUI, Initializable {
     NotificationService notificationService;
 
     @Override
+    public void initialize() {
+//        logService.addLogListener(this);
+    }
+
+    @Override
     public void run() {
-        notificationService.addNotification("Updates available!", () -> commandService.run(getOldUpdater(), true), 10000);
+        notificationService.addNotification("Updates available!", () -> commandService.run(getOldUpdater(), true));
     }
 
     private CommandInfo getOldUpdater() {
@@ -63,4 +70,8 @@ public class ToolbarHack implements UpdaterUI, Initializable {
         ij.command().run(ToolbarHack.class, true);
     }
 
+    @Override
+    public void messageLogged(LogMessage message) {
+        notificationService.addMessage(message);
+    }
 }

@@ -45,7 +45,6 @@ public class ChangelogTest {
 //		assertNotNull(getChangelog("scijava-common", "2.76.1", "2.77.0"));
 	}
 
-
 	public List<Change> getChangelog(String className, String versionBefore, String versionAfter) {
 		System.out.println("CHANGELOG " + className + " " + versionBefore + " -> " + versionAfter);
 		List<Change> log = getChanges(className, getGithubUrl(className, versionAfter), versionBefore, versionAfter);

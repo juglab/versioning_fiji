@@ -2,6 +2,8 @@ package sc.fiji.versioning.command.ui;
 
 import net.imagej.updater.FilesCollection;
 import net.imagej.updater.UpdateSite;
+import net.imagej.updater.UpdaterUI;
+import org.scijava.command.CommandInfo;
 import org.scijava.command.CommandService;
 import org.scijava.module.ModuleService;
 import sc.fiji.versioning.command.InstallUpdateSiteCommand;
@@ -20,17 +22,19 @@ public class UpdateSitesMenu extends JMenu {
 	CommandService commandService;
 
 
-	public UpdateSitesMenu(FilesCollection files, CommandService commandService, ModuleService moduleService) {
+	public UpdateSitesMenu(FilesCollection files, CommandService commandService, ModuleService moduleService, CommandInfo updater) {
 		super("Update Sites");
 		this.commandService = commandService;
 		this.moduleService = moduleService;
 		List<UpdateSite> installableUpdateSites = new ArrayList<>();
-		List<UpdateSite> installedUpdateSites = new ArrayList<>();
+		List<UpdateSite> uninstallableUpdateSites = new ArrayList<>();
 		List<UpdateSite> modifiableUpdateSites = new ArrayList<>();
 
 		for(UpdateSite site : files.getUpdateSites(true)) {
 			if(site.isActive()) {
-				installedUpdateSites.add(site);
+				if(!site.isOfficial()) {
+					uninstallableUpdateSites.add(site);
+				}
 				if(site.isUploadable()) {
 					modifiableUpdateSites.add(site);
 				}
@@ -40,9 +44,9 @@ public class UpdateSitesMenu extends JMenu {
 			}
 		}
 		add(new UpdateSitesSubMenu("Install", files, installableUpdateSites, InstallUpdateSiteCommand.class, commandService, moduleService));
-		add(new UpdateSitesSubMenu("Uninstall", files, installedUpdateSites, UninstallUpdateSiteCommand.class, commandService, moduleService));
+		add(new UpdateSitesSubMenu("Uninstall", files, uninstallableUpdateSites, UninstallUpdateSiteCommand.class, commandService, moduleService));
 		add(new UpdateSitesSubMenu("Modify", files, modifiableUpdateSites, ModifyUpdateSiteCommand.class, commandService, moduleService));
-		add(getActionForCommand("Manage Update Sites", ManageUpdateSitesCommand.class, "files", files));
+		add(getActionForCommand("Manage Update Sites", ManageUpdateSitesCommand.class, "files", files, "updater", updater));
 	}
 
 	private Action getActionForCommand(String name, Class commandClass, Object... args) {

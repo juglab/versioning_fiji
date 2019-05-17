@@ -5,24 +5,25 @@ import net.miginfocom.swing.MigLayout;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.TimerTask;
-import java.util.Timer;
+import java.util.ArrayList;
+import java.util.List;
 
 public class NotificationDialog extends JDialog {
 
 	private JButton closeBtn;
-	private int fadeOutStepTime = 8;
-	private float alpha = 1;
-	private float increment = -0.02f;
+	private List<ActionListener> listeners = new ArrayList<>();
 
-	public NotificationDialog(Component parent, String title, Action action) {
+	public NotificationDialog(String title, Action action) {
 		setUndecorated(true);
 		setSize(180, 60);
+		setTitle(title);
 		setContentPane(createContent(title));
 		pack();
-		setLocation(parent.getLocationOnScreen().x+parent.getWidth()-getWidth(), parent.getLocationOnScreen().y + parent.getHeight()+5);
+
+		NotificationDialog dialog = this;
 
 		addMouseListener(new MouseAdapter() {
 			@Override
@@ -30,7 +31,7 @@ public class NotificationDialog extends JDialog {
 				super.mouseClicked(e);
 				//check if dialog got disposed, if not, call action
 				if(isActive()) {
-					dispose();
+					listeners.forEach(actionListener -> actionListener.actionPerformed(new DialogActionExecutedEvent(dialog)));
 					action.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, null) {});
 				}
 			}
@@ -77,5 +78,14 @@ public class NotificationDialog extends JDialog {
 
 	public void displayCloseBtn(boolean visible) {
 		closeBtn.setVisible(visible);
+	}
+
+	public void addActionListener(ActionListener listener) {
+		listeners.add(listener);
+	}
+
+	public void removeActionListener(ActionListener listener) {
+		if(listeners.contains(listener))
+			listeners.remove(listener);
 	}
 }

@@ -29,31 +29,7 @@
  * #L%
  */
 
-package sc.fiji.versioning.command.ui;
-
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.TableModelEvent;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+package sc.fiji.versioning.ui.updatesite;
 
 import net.imagej.ui.swing.updater.ProgressDialog;
 import net.imagej.ui.swing.updater.SwingTools;
@@ -67,9 +43,25 @@ import net.imagej.updater.util.UpdaterUserInterface;
 import net.imagej.updater.util.UpdaterUtil;
 import net.imagej.util.MediaWikiClient;
 import net.miginfocom.swing.MigLayout;
-
 import org.scijava.log.LogService;
 import org.scijava.ui.swing.StaticSwingUtils;
+
+import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TableModelEvent;
+import javax.swing.table.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * The dialog in which the user can choose which update sites to follow.

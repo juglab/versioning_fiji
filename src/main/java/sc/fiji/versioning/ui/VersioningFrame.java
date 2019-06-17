@@ -2,6 +2,7 @@ package sc.fiji.versioning.ui;
 
 import net.imagej.updater.util.Progress;
 import net.miginfocom.swing.MigLayout;
+import org.scijava.plugin.Parameter;
 import sc.fiji.versioning.model.AppCommit;
 import sc.fiji.versioning.model.AppCommitInProgress;
 import sc.fiji.versioning.model.FileChange;
@@ -19,10 +20,11 @@ import java.util.Vector;
 
 public class VersioningFrame extends JFrame implements Progress {
 
+	@Parameter
 	private VersioningService versioningService;
 
 	private JList commitList, commitDetails;
-	private List<AppCommit> data;
+	private List<AppCommit> data = new ArrayList<>();
 	private JButton deleteBtn, restoreBtn, discardSelectedBtn, undoLastCommitBtn, renameBtn;
 	private Vector<AppCommit> commits;
 	private List<FileChange> changes;
@@ -43,11 +45,14 @@ public class VersioningFrame extends JFrame implements Progress {
 	private static final String changesPresentStr = "Unsaved changes in Fiji installation.";
 	private static final String noChangesPresentStr = "No unsaved changes in Fiji installation.";
 
-	public VersioningFrame(VersioningService versioningService) {
+	public VersioningFrame() {
 		super(frameTitle);
-		this.versioningService = versioningService;
 		setMinimumSize(new Dimension(800, 400));
 		setContentPane(createContent());
+	}
+
+	public void init() {
+		updateCommits();
 	}
 
 	public void checkForChanges() {
@@ -134,7 +139,6 @@ public class VersioningFrame extends JFrame implements Progress {
 
 	private Component createCommitList() {
 		commitList = new JList();
-		updateCommits();
 		commitList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		commitList.addListSelectionListener(e -> {
 			int selected = commitList.getSelectedIndex();

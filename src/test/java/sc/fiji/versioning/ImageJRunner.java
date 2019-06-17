@@ -1,7 +1,6 @@
 package sc.fiji.versioning;
 
 import net.imagej.ImageJ;
-import sc.fiji.versioning.command.Versioning;
 
 public class ImageJRunner {
 	public static void main(final String... args) throws Exception {

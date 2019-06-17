@@ -8,19 +8,10 @@
 
 package sc.fiji.versioning.command.util;
 
-import net.imagej.ImageJ;
-import net.imagej.updater.UpdaterUI;
-import org.scijava.Initializable;
-import org.scijava.Priority;
 import org.scijava.command.Command;
-import org.scijava.command.CommandInfo;
-import org.scijava.command.CommandService;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import sc.fiji.versioning.notification.NotificationService;
-
-import java.util.List;
 
 @Plugin(type = Command.class, label="Throw error")
 public class ErrorThrowingCommand implements Command {

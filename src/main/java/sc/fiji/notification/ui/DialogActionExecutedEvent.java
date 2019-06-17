@@ -1,4 +1,6 @@
-package sc.fiji.versioning.command.ui;
+package sc.fiji.notification.ui;
+
+import sc.fiji.notification.ui.NotificationDialog;
 
 import java.awt.event.ActionEvent;
 

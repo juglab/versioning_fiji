@@ -14,6 +14,7 @@ import sc.fiji.versioning.model.FileChange;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -96,6 +97,11 @@ public class GitVersioningService extends AbstractService implements VersioningS
 	public void undoLastCommit() throws GitAPIException, IOException {
 		loadGit();
 		GitCommands.undoLastCommit(git);
+	}
+
+	@Override
+	public List<FileChange> getChanges(String id1, String id2) throws GitAPIException, IOException {
+		return GitCommands.getChanges(git, id1, id2);
 	}
 
 	@Override

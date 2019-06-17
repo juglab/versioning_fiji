@@ -12,15 +12,12 @@ import org.scijava.command.Command;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import org.scijava.ui.UIService;
 
 @Plugin(type = Command.class, label="Throw info")
 public class InfoThrowingCommand implements Command {
 
     @Parameter
     LogService logService;
-    @Parameter
-    UIService uiService;
     @Override
     public void run() {
         logService.info("This is some information.");

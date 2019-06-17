@@ -29,16 +29,13 @@
  * #L%
  */
 
-package sc.fiji.versioning.command.ui;
+package sc.fiji.versioning.ui;
 
-import net.imagej.ui.swing.updater.SwingTools;
-import net.imagej.ui.swing.updater.UpdaterFrame;
 import net.imagej.updater.FileObject;
 import net.imagej.updater.FileObject.Action;
 import net.imagej.updater.FileObject.Status;
 import net.imagej.updater.FilesCollection;
 import net.imagej.updater.GroupAction;
-import net.imagej.updater.UpdateSite;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;

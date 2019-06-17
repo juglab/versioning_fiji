@@ -19,7 +19,8 @@ import org.scijava.log.LogMessage;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import sc.fiji.versioning.notification.NotificationService;
+import sc.fiji.notification.NotificationService;
+import sc.fiji.versioning.service.VersioningService;
 
 import java.util.List;
 
@@ -35,6 +36,9 @@ public class ToolbarHack implements UpdaterUI, Initializable, LogListener {
     @Parameter
     NotificationService notificationService;
 
+    @Parameter
+    VersioningService versioningService;
+
     @Override
     public void initialize() {
 //        logService.addLogListener(this);
@@ -43,6 +47,11 @@ public class ToolbarHack implements UpdaterUI, Initializable, LogListener {
     @Override
     public void run() {
         notificationService.addNotification("Updates available!", () -> commandService.run(getOldUpdater(), true));
+        try {
+            versioningService.commitCurrentChanges();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private CommandInfo getOldUpdater() {

@@ -1,5 +1,6 @@
 package sc.fiji.versioning;
 
+import net.imagej.ui.swing.updater.ProgressDialog;
 import net.imagej.updater.FilesCollection;
 import net.imagej.updater.Installer;
 import net.imagej.updater.UpdateSite;
@@ -38,7 +39,7 @@ public class UpdateSitesTest {
 		assertTrue(files.changes().iterator().hasNext());
 		//install
 		final Installer installer =
-				new Installer(files, null);
+				new Installer(files, new ProgressDialog(null));
 		installer.start();
 		files.write();
 		FilesCollection files2 = new FilesCollection(folder.getRoot().getAbsoluteFile());
@@ -58,6 +59,7 @@ public class UpdateSitesTest {
 		files.write();
 		assertFalse(files.changes().iterator().hasNext());
 		files.deactivateUpdateSite(clij);
+		files.changes().forEach(fileObject -> System.out.println(fileObject.getAction()));
 		assertTrue(files.changes().iterator().hasNext());
 		FilesCollection files2 = new FilesCollection(folder.getRoot().getAbsoluteFile());
 		files2.read();
@@ -77,7 +79,7 @@ public class UpdateSitesTest {
 		assertFalse(files.changes().iterator().hasNext());
 		files.deactivateUpdateSite(clij);
 		assertTrue(files.changes().iterator().hasNext());
-		installer = new Installer(files, null);
+		installer = new Installer(files.clone(files.changes()), new ProgressDialog(null));
 		installer.start();
 		files.write();
 		assertFalse(files.changes().iterator().hasNext());

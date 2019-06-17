@@ -1,4 +1,4 @@
-package sc.fiji.versioning.notification;
+package sc.fiji.notification;
 
 import net.imagej.legacy.LegacyService;
 import net.imagej.updater.FilesCollection;
@@ -18,10 +18,10 @@ import org.scijava.service.Service;
 import org.scijava.ui.DialogPrompt;
 import org.scijava.ui.swing.search.SwingSearchBar;
 import org.xml.sax.SAXException;
-import sc.fiji.versioning.command.action.VersioningAction;
-import sc.fiji.versioning.command.ui.DialogActionExecutedEvent;
-import sc.fiji.versioning.command.ui.NotificationDialog;
-import sc.fiji.versioning.command.ui.UpdateSitesMenu;
+import sc.fiji.notification.ui.DialogActionExecutedEvent;
+import sc.fiji.notification.ui.NotificationDialog;
+import sc.fiji.versioning.command.session.*;
+import sc.fiji.versioning.ui.updatesite.UpdateSitesMenu;
 
 import javax.swing.*;
 import javax.xml.parsers.ParserConfigurationException;
@@ -30,8 +30,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -98,11 +99,51 @@ public class SwingNotificationService extends AbstractService implements Notific
 		popup.add(noNotificationsItem);
 		popup.addSeparator();
 		popup.add(updateSites);
-		VersioningAction versioningAction = new VersioningAction();
-		getContext().inject(versioningAction);
-		popup.add(versioningAction);
+		popup.add(createSessionsMenu());
+		popup.add(createCurrentSessionMenu());
 		MouseListener popupListener = new PopupListener();
 		eventBtn.addMouseListener(popupListener);
+	}
+
+	private Component createCurrentSessionMenu() {
+		JMenu menu = new JMenu("Current session");
+		menu.add(new AbstractAction("Show version history") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				commandService.run(ShowHistoryCommand.class, true);
+			}
+		});
+		menu.add(new AbstractAction("Revert latest change") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				commandService.run(RevertLatestSessionChangeCommand.class, true);
+			}
+		});
+		menu.add(new AbstractAction("Restore initial state") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				commandService.run(RestoreInitialSessionStateCommand.class, true);
+			}
+		});
+		return menu;
+	}
+
+	private Component createSessionsMenu() {
+		JMenu menu = new JMenu("Sessions");
+		menu.add(new AbstractAction("Manage sessions") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				commandService.run(ManageSessionsCommand.class, true);
+			}
+		});
+		menu.add(new AbstractAction("Add session..") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				commandService.run(AddSessionCommand.class, true);
+			}
+		});
+		//TODO switch to existing sessions
+		return menu;
 	}
 
 	private void addEventButton(SwingSearchBar searchbar) {
@@ -296,8 +337,8 @@ public class SwingNotificationService extends AbstractService implements Notific
 		try {
 			files.read();
 		} catch (IOException | ParserConfigurationException | SAXException e) {
-//			e.printStackTrace();
-		}
+			e.printStackTrace();
+		 }
 		AvailableSites.initializeAndAddSites(files, log());
 		try {
 			files.write();

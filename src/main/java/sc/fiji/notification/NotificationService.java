@@ -1,4 +1,4 @@
-package sc.fiji.versioning.notification;
+package sc.fiji.notification;
 
 import net.imagej.ImageJService;
 import org.scijava.log.LogMessage;

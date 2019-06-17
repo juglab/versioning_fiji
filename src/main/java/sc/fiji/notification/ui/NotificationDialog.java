@@ -1,4 +1,4 @@
-package sc.fiji.versioning.command.ui;
+package sc.fiji.notification.ui;
 
 import net.miginfocom.swing.MigLayout;
 

@@ -1,15 +1,15 @@
-package sc.fiji.versioning.command.ui;
+package sc.fiji.versioning.ui.updatesite;
 
 import net.imagej.updater.FilesCollection;
 import net.imagej.updater.UpdateSite;
-import net.imagej.updater.UpdaterUI;
 import org.scijava.command.CommandInfo;
 import org.scijava.command.CommandService;
 import org.scijava.module.ModuleService;
-import sc.fiji.versioning.command.InstallUpdateSiteCommand;
-import sc.fiji.versioning.command.ManageUpdateSitesCommand;
-import sc.fiji.versioning.command.ModifyUpdateSiteCommand;
-import sc.fiji.versioning.command.UninstallUpdateSiteCommand;
+import sc.fiji.versioning.command.updatesite.InstallUpdateSiteCommand;
+import sc.fiji.versioning.command.updatesite.ManageUpdateSitesCommand;
+import sc.fiji.versioning.command.updatesite.ModifyUpdateSiteCommand;
+import sc.fiji.versioning.command.updatesite.UninstallUpdateSiteCommand;
+import sc.fiji.versioning.ui.updatesite.UpdateSitesSubMenu;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;

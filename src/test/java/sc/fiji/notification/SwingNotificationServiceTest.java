@@ -1,13 +1,12 @@
-package sc.fiji.versioning.notification;
+package sc.fiji.notification;
 
 import net.imagej.ImageJ;
 import org.junit.Test;
-import sc.fiji.versioning.command.ui.NotificationDialog;
+import sc.fiji.notification.ui.NotificationDialog;
 
 import javax.swing.*;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.lang.reflect.InvocationTargetException;
 
 import static org.junit.Assert.*;

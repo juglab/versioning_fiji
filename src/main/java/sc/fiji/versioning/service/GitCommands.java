@@ -30,11 +30,24 @@ public class GitCommands {
 	static boolean debug = true;
 
 	public static void commitCurrentStatus(Git git) throws GitAPIException {
-		if(debug) System.out.println("git add .");
-		git.add().addFilepattern(".").call();
-		if(debug) System.out.println("git add -u .");
-		git.add().setUpdate(true).addFilepattern(".").call();
-		if(debug) getCurrentChanges(git);
+		//NOTE: not doing `git add .` because it's incredibly slow
+		if(debug) System.out.println("git status");
+		Status status = git.status().call();
+		Set<String> toAdd = new HashSet<>();
+		Set<String> toRemove = new HashSet<>();
+		status.getUncommittedChanges().forEach(toAdd::add);
+		status.getUntrackedFolders().forEach(toAdd::add);
+		status.getUntracked().forEach(toAdd::add);
+		status.getModified().forEach(toAdd::add);
+		status.getMissing().forEach(toRemove::add);
+		for (String s : toAdd) {
+			if(debug) System.out.println("git add " + s);
+			git.add().addFilepattern(s).call();
+		}
+		for (String s : toRemove) {
+			if(debug) System.out.println("git rm " + s);
+			git.rm().addFilepattern(s).call();
+		}
 		String date = new SimpleDateFormat().format(new Date());
 		if(debug) System.out.println("git commit -m \'" + date + "\'");
 		git.commit().setMessage(date).call();
@@ -80,6 +93,13 @@ public class GitCommands {
 			if(debug) System.out.println("git init " + localPath);
 			return Git.init().setDirectory(localPath).call();
 		}
+	}
+
+	public static List<FileChange> getChanges(Git git, String commit1ID, String commit2ID) throws GitAPIException, IOException {
+		RevWalk walk = new RevWalk(git.getRepository());
+		RevCommit commit1 = walk.parseCommit(ObjectId.fromString(commit1ID));
+		RevCommit commit2 = walk.parseCommit(ObjectId.fromString(commit2ID));
+		return getChanges(git, commit1, commit2);
 	}
 
 	public static List<FileChange> getChanges(Git git, RevCommit commit1, RevCommit commit2) throws GitAPIException, IOException {

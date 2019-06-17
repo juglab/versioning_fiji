@@ -9,10 +9,9 @@
 package sc.fiji.versioning.command.util;
 
 import org.scijava.command.Command;
-import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import sc.fiji.versioning.notification.NotificationService;
+import sc.fiji.notification.NotificationService;
 
 import javax.swing.*;
 import java.util.Date;

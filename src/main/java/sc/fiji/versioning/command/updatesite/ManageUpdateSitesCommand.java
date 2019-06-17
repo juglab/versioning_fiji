@@ -1,26 +1,20 @@
-package sc.fiji.versioning.command;
+package sc.fiji.versioning.command.updatesite;
 
-import net.imagej.ui.swing.updater.UpdaterFrame;
-import net.imagej.ui.swing.updater.ViewOptions;
 import net.imagej.updater.FilesCollection;
-import net.imagej.updater.UpToDate;
-import net.imagej.updater.UpdaterUI;
 import net.imagej.updater.UploaderService;
 import org.scijava.command.Command;
 import org.scijava.command.CommandInfo;
 import org.scijava.command.CommandService;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
-import org.xml.sax.SAXException;
-import sc.fiji.versioning.command.ui.FileChangesConfirmationDialog;
-import sc.fiji.versioning.command.ui.NewSitesDialog;
+import sc.fiji.versioning.ui.FileChangesConfirmationDialog;
+import sc.fiji.versioning.ui.updatesite.NewSitesDialog;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerConfigurationException;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
+
+//TODO move swing code to better place
 
 public class ManageUpdateSitesCommand implements Command {
 

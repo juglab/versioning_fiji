@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Service for verioning an ImageJ installation.
+ * Service for versioning an ImageJ installation.
  *
  * @author Deborah Schmidt
  */
@@ -94,6 +94,15 @@ public interface VersioningService extends ImageJService {
 		restoreCommit(getCommits().get(0).id);
 	}
 
+	/**
+	 * Returns a list of changes between two commit versions.
+	 * @param id1 The id of the first commit
+	 * @param id2 The id of the second commit
+	 * @return
+	 */
+	List<FileChange> getChanges(String id1, String id2) throws Exception;
+
 	File getBaseDirectory();
+
 	void setBaseDirectory(File dir);
 }

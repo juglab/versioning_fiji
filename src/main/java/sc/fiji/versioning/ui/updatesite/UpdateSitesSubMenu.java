@@ -1,4 +1,4 @@
-package sc.fiji.versioning.command.ui;
+package sc.fiji.versioning.ui.updatesite;
 
 import net.imagej.updater.FilesCollection;
 import net.imagej.updater.UpdateSite;
@@ -6,7 +6,8 @@ import org.scijava.command.CommandInfo;
 import org.scijava.command.CommandService;
 import org.scijava.module.ModuleInfo;
 import org.scijava.module.ModuleService;
-import sc.fiji.versioning.command.UpdateSiteCommand;
+import sc.fiji.versioning.command.updatesite.AbstractUpdateSiteCommand;
+import sc.fiji.versioning.service.VersioningService;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -18,7 +19,7 @@ public class UpdateSitesSubMenu extends JMenu {
 	CommandService commandService;
 
 	private static final int MAX_SIZE = 20;
-	private final Class<? extends UpdateSiteCommand> action;
+	private final Class<? extends AbstractUpdateSiteCommand> action;
 	private final FilesCollection files;
 
 	public UpdateSitesSubMenu(String name, FilesCollection files, List<UpdateSite> sites, Class action, CommandService commandService, ModuleService moduleService) {
@@ -63,7 +64,7 @@ public class UpdateSitesSubMenu extends JMenu {
 			part1 = nameFirst.substring(0, 0);
 		} else {
 			int i = 0;
-			for(; i < nameFirst.length(); i++) {
+			for(; i < Math.min(nameFirst.length(), previous.getName().length()); i++) {
 				if(!previous.getName().substring(0, i).toLowerCase().equals(nameFirst.substring(0,i).toLowerCase())) {
 					break;
 				}
@@ -99,6 +100,11 @@ public class UpdateSitesSubMenu extends JMenu {
 		add(new AbstractAction(site.getName()) {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				try {
+					commandService.context().getService(VersioningService.class).commitCurrentChanges();
+				} catch (Exception e1) {
+					e1.printStackTrace();
+				}
 				commandService.run(action, true, "files", files, "site", site);
 			}
 		});

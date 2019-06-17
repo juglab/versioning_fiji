@@ -1,0 +1,49 @@
+package sc.fiji.versioning.command.session;
+
+import org.scijava.command.Command;
+import org.scijava.plugin.Parameter;
+import org.scijava.plugin.Plugin;
+import sc.fiji.versioning.model.AppCommit;
+import sc.fiji.versioning.model.FileChange;
+import sc.fiji.versioning.service.VersioningService;
+import sc.fiji.versioning.service.VersioningUIService;
+
+import java.util.List;
+
+@Plugin(type= Command.class, label = "Help>Current session>Restore initial state")
+public class RestoreInitialSessionStateCommand implements Command {
+
+	@Parameter
+	VersioningService versioningService;
+
+	@Parameter
+	VersioningUIService versioningUIService;
+
+	@Override
+	public void run() {
+		List<AppCommit> commits = null;
+		try {
+			if (versioningService.hasUnsavedChanges()) {
+				versioningService.commitCurrentChanges();
+				commits = versioningService.getCommits();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		if(commits.size() < 2) return;
+		String currentID = commits.get(commits.size() - 1).id;
+		String prevID = commits.get(0).id;
+		try {
+			List<FileChange> changes = versioningService.getChanges(currentID, prevID);
+			if (versioningUIService.approveChanges(changes)) {
+				try {
+					versioningService.restoreInitialCommit();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}

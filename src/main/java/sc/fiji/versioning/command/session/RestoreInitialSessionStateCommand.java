@@ -25,16 +25,16 @@ public class RestoreInitialSessionStateCommand implements Command {
 		try {
 			if (versioningService.hasUnsavedChanges()) {
 				versioningService.commitCurrentChanges();
-				commits = versioningService.getCommits();
 			}
+			commits = versioningService.getCommits();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		if(commits.size() < 2) return;
+		if(commits == null || commits.size() < 2) return;
 		String currentID = commits.get(commits.size() - 1).id;
 		String prevID = commits.get(0).id;
 		try {
-			List<FileChange> changes = versioningService.getChanges(currentID, prevID);
+			List<FileChange> changes = versioningService.getChanges(prevID, currentID);
 			if (versioningUIService.approveChanges(changes)) {
 				try {
 					versioningService.restoreInitialCommit();

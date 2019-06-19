@@ -47,4 +47,8 @@ public interface VersioningUIService extends ImageJService {
 	 * Shows the history (all recorded changes) of the current session.
 	 */
 	void showSessionHistory();
+
+	<T> T askFor(String question, Class<T> returnType);
+
+	void showSessions();
 }

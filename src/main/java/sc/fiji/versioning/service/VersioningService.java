@@ -7,11 +7,14 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.PluginInfo;
 import sc.fiji.versioning.model.AppCommit;
 import sc.fiji.versioning.model.FileChange;
+import sc.fiji.versioning.model.Session;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.Vector;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Service for versioning an ImageJ installation.
@@ -102,7 +105,23 @@ public interface VersioningService extends ImageJService {
 	 */
 	List<FileChange> getChanges(String id1, String id2) throws Exception;
 
+	void copyCurrentSession(String newSessionName) throws Exception;
+
+	void openSession(String sessionName) throws Exception;
+
+	void renameSession(String oldSessionName, String newSessionName) throws Exception;
+
+	void deleteSession(String sessionName) throws Exception;
+
 	File getBaseDirectory();
 
 	void setBaseDirectory(File dir);
+
+	List<Session> getSessions() throws Exception;
+
+	Session getCurrentSession() throws Exception;
+
+	void importSessionFromFolder(File dir, String name) throws Exception;
+
+	void downloadFreshSession(String name) throws Exception;
 }

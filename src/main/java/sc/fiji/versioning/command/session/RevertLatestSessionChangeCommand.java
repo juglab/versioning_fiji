@@ -34,7 +34,7 @@ public class RevertLatestSessionChangeCommand implements Command {
 		String currentID = commits.get(commits.size() - 1).id;
 		String prevID = commits.get(commits.size() - 2).id;
 		try {
-			List<FileChange> changes = versioningService.getChanges(currentID, prevID);
+			List<FileChange> changes = versioningService.getChanges(prevID, currentID);
 			if (versioningUIService.approveChanges(changes)) {
 				try {
 					versioningService.undoLastCommit();

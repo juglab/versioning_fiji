@@ -5,12 +5,14 @@ import net.imagej.ui.swing.updater.SwingTools;
 import net.imagej.updater.FilesCollection;
 import net.imagej.updater.util.Progress;
 import org.scijava.Context;
+import org.scijava.event.EventService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.service.AbstractService;
 import org.scijava.service.Service;
 import sc.fiji.versioning.model.FileChange;
 import sc.fiji.versioning.ui.FileChangesConfirmationDialog;
+import sc.fiji.versioning.ui.SessionsFrame;
 import sc.fiji.versioning.ui.VersioningFrame;
 
 import javax.swing.*;
@@ -95,5 +97,20 @@ public class SwingVersioningService extends AbstractService implements Versionin
 		frame.pack();
 		frame.setVisible(true);
 		frame.checkForChanges();
+	}
+
+	@Override
+	public <T> T askFor(String question, Class<T> returnType) {
+		return (T) JOptionPane.showInputDialog(question);
+	}
+
+	@Override
+	public void showSessions() {
+		SessionsFrame frame = new SessionsFrame();
+		context.inject(frame);
+		frame.init();
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.pack();
+		frame.setVisible(true);
 	}
 }

@@ -36,10 +36,14 @@ public class GitCommands {
 		Set<String> toAdd = new HashSet<>();
 		Set<String> toRemove = new HashSet<>();
 		status.getUncommittedChanges().forEach(toAdd::add);
-		status.getUntrackedFolders().forEach(toAdd::add);
+//		status.getUntrackedFolders().forEach(toAdd::add);
 		status.getUntracked().forEach(toAdd::add);
 		status.getModified().forEach(toAdd::add);
 		status.getMissing().forEach(toRemove::add);
+		if(toAdd.size() + toRemove.size() == 0) {
+			System.out.println("Nothing to commit");
+			return;
+		}
 		for (String s : toAdd) {
 			if(debug) System.out.println("git add " + s);
 			git.add().addFilepattern(s).call();
@@ -70,10 +74,10 @@ public class GitCommands {
 			PersonIdent authorIdent = commit.getAuthorIdent();
 			c.date = authorIdent.getWhen();
 			c.commitMsg = new SimpleDateFormat().format(c.date);
-			if(c.changes.size() > 0) {
+//			if(c.changes.size() > 0) {
 				lastCom = commit;
 				commits.add(c);
-			}
+//			}
 		}
 		return commits;
 	}
@@ -309,5 +313,41 @@ public class GitCommands {
 
 	public static void undoLastCommit(Git git) throws GitAPIException {
 		restoreStatus(git, "HEAD~1");
+	}
+
+	public static void createAndCheckoutBranch(Git git, String branchName) throws GitAPIException {
+		if(debug) System.out.println("git checkout -b " + branchName);
+		git.checkout().setCreateBranch(true).setName(branchName).call();
+	}
+
+	public static void createAndCheckoutEmptyBranch(Git git, String branchName) throws GitAPIException, IOException {
+		if(debug) System.out.println("git checkout --orphan " + branchName);
+		git.checkout().setOrphan(true).setName(branchName).call();
+		if(debug) System.out.println("git reset --hard");
+		git.reset().setMode(ResetCommand.ResetType.HARD).call();
+	}
+
+	public static void checkoutBranch(Git git, String name) throws GitAPIException {
+		if(debug) System.out.println("git checkout " + name);
+		git.checkout().setName(name).call();
+	}
+
+	public static void renameBranch(Git git, String oldName, String newName) throws GitAPIException {
+		if(debug) System.out.println("git branch -m " + oldName + " " + newName);
+		git.branchRename().setOldName(oldName).setNewName(newName).call();
+	}
+
+	public static void deleteBranch(Git git, String name) throws GitAPIException {
+		if(debug) System.out.println("git branch -d " + name);
+		git.branchDelete().setBranchNames(name).call();
+	}
+
+	public static List<Ref> getBranches(Git git) throws GitAPIException {
+		if(debug) System.out.println("git branch");
+		return git.branchList().call();
+	}
+
+	public static String getCurrentBranch(Git git) throws IOException {
+		return git.getRepository().getFullBranch();
 	}
 }

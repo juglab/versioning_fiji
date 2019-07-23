@@ -218,6 +218,8 @@ public class VersioningTest extends AbstractVersioningTest {
 		//checkout second session
 		versioning.openSession(session2);
 		assertNotEquals(getTestString(), getContent(newFile));
+
+		versioning.openSession("default");
 	}
 
 	@Test

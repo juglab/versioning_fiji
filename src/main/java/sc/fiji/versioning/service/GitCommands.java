@@ -339,7 +339,7 @@ public class GitCommands {
 
 	public static void deleteBranch(Git git, String name) throws GitAPIException {
 		if(debug) System.out.println("git branch -d " + name);
-		git.branchDelete().setBranchNames(name).call();
+		git.branchDelete().setForce(true).setBranchNames(name).call();
 	}
 
 	public static List<Ref> getBranches(Git git) throws GitAPIException {

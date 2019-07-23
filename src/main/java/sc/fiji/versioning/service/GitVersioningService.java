@@ -12,26 +12,18 @@ import org.scijava.app.AppService;
 import org.scijava.app.StatusService;
 import org.scijava.download.DownloadService;
 import org.scijava.event.EventService;
-import org.scijava.io.location.BytesLocation;
-import org.scijava.io.location.FileLocation;
-import org.scijava.io.location.Location;
-import org.scijava.io.location.URLLocation;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.service.AbstractService;
 import org.scijava.service.Service;
-import org.scijava.task.Task;
-import org.scijava.util.ByteArray;
 import sc.fiji.versioning.model.AppCommit;
 import sc.fiji.versioning.model.FileChange;
 import sc.fiji.versioning.model.Session;
-import sc.fiji.versioning.ui.updatesite.NewSitesDialog;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -137,6 +129,7 @@ public class GitVersioningService extends AbstractService implements VersioningS
 
 	@Override
 	public List<FileChange> getChanges(String id1, String id2) throws GitAPIException, IOException {
+		if(id1 == null || id2 == null) return null;
 		loadGit();
 		return GitCommands.getChanges(git, id1, id2);
 	}
@@ -176,20 +169,36 @@ public class GitVersioningService extends AbstractService implements VersioningS
 
 	@Override
 	public void downloadFreshSession(String name) throws GitAPIException, IOException, ExecutionException, InterruptedException {
-		loadGit();
-		commitCurrentChanges();
-		GitCommands.createAndCheckoutEmptyBranch(git, name);
 		String platform = UpdaterUtil.getPlatform();
 		URL url = new URL("https://downloads.imagej.net/fiji/latest/fiji-" + platform + ".zip");
 		String downloadDir = Files.createTempDirectory("fiji") + "/fiji-" + platform + ".zip";
 		InputStream in = url.openStream();
 		Files.copy(in, Paths.get(downloadDir), StandardCopyOption.REPLACE_EXISTING);
+		loadGit();
+		commitCurrentChanges();
+		GitCommands.createAndCheckoutEmptyBranch(git, name);
 		unZipIt(downloadDir, getBaseDirectory().getAbsolutePath());
-//		downloadAndUnpackResource(url, getBaseDirectory());
 		commitCurrentChanges();
 		eventService.publish(new SessionChangedEvent());
 	}
 
+	@Override
+	public List<FileChange> getChanges(Session rSession, Session cSession) throws GitAPIException, IOException {
+		return getChanges(getCommitID(rSession), getCommitID(cSession));
+	}
+
+	private String getCommitID(Session session) throws GitAPIException, IOException {
+		if(session == null) return null;
+		loadGit();
+		List<Ref> branches = GitCommands.getBranches(git);
+		for (Ref branch : branches) {
+			if (branch.getName().equals(session.name)) {
+				System.out.println(branch.getLeaf().getObjectId().getName());
+				return branch.getLeaf().getObjectId().getName();
+			}
+		}
+		return null;
+	}
 
 	/**
 	 * Unzip it
@@ -252,87 +261,6 @@ public class GitVersioningService extends AbstractService implements VersioningS
 		}
 	}
 
-	private void downloadAndUnpackResource(Location source, File destDir) throws InterruptedException, ExecutionException, IOException {
-		System.out.println("downloading and unpacking " + source + " to " + destDir);
-		ByteArray byteArray = new ByteArray(1048576);
-		BytesLocation bytes = new BytesLocation(byteArray);
-		Task task = downloadService.download(source, bytes).task();
-		task.waitFor();
-		byte[] buf = new byte[65536];
-		ByteArrayInputStream bais = new ByteArrayInputStream(byteArray.getArray(), 0, byteArray.size());
-		destDir.mkdirs();
-		ZipInputStream zis = new ZipInputStream(bais);
-		Throwable var10 = null;
-
-		try {
-			while(true) {
-				ZipEntry entry = zis.getNextEntry();
-				if (entry == null) {
-					break;
-				}
-
-				String name = entry.getName();
-				statusService.showStatus("Unpacking " + name);
-				File outFile = new File(destDir, name);
-				if (entry.isDirectory()) {
-					outFile.mkdirs();
-				} else {
-					int size = (int)entry.getSize();
-					int len = 0;
-					FileOutputStream out = new FileOutputStream(outFile);
-					Throwable var17 = null;
-
-					try {
-						while(true) {
-							statusService.showStatus(len, size, "Unpacking " + name);
-							int r = zis.read(buf);
-							if (r < 0) {
-								break;
-							}
-
-							len += r;
-							out.write(buf, 0, r);
-						}
-					} catch (Throwable var40) {
-						var17 = var40;
-						throw var40;
-					} finally {
-						if (out != null) {
-							if (var17 != null) {
-								try {
-									out.close();
-								} catch (Throwable var39) {
-									var17.addSuppressed(var39);
-								}
-							} else {
-								out.close();
-							}
-						}
-
-					}
-				}
-			}
-		} catch (Throwable var42) {
-			var10 = var42;
-			throw var42;
-		} finally {
-			if (zis != null) {
-				if (var10 != null) {
-					try {
-						zis.close();
-					} catch (Throwable var38) {
-						var10.addSuppressed(var38);
-					}
-				} else {
-					zis.close();
-				}
-			}
-
-		}
-
-		statusService.clearStatus();
-	}
-
 	@Override
 	public File getBaseDirectory() {
 		return base;
@@ -362,6 +290,7 @@ public class GitVersioningService extends AbstractService implements VersioningS
 	public void renameSession(String oldSessionName, String newSessionName) throws Exception {
 		loadGit();
 		GitCommands.renameBranch(git, oldSessionName, newSessionName);
+		eventService.publish(new SessionChangedEvent());
 	}
 
 	@Override

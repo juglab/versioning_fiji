@@ -4,8 +4,6 @@ import net.imagej.updater.util.Progress;
 import net.miginfocom.swing.MigLayout;
 import org.scijava.event.EventService;
 import org.scijava.plugin.Parameter;
-import org.scijava.thread.ThreadService;
-import sc.fiji.versioning.model.FileChange;
 import sc.fiji.versioning.model.Session;
 import sc.fiji.versioning.service.VersioningService;
 import sc.fiji.versioning.service.VersioningUIService;
@@ -18,16 +16,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
-public class SessionsFrame extends JFrame implements Progress {
+public class CompareSessionsFrame extends JFrame implements Progress {
 
 	@Parameter
 	private VersioningService versioningService;
 
 	@Parameter
 	private VersioningUIService versioningUIService;
-
-	@Parameter
-	private ThreadService threadService;
 
 	@Parameter
 	private EventService eventService;
@@ -42,21 +37,25 @@ public class SessionsFrame extends JFrame implements Progress {
 	private static final String renameBtnTitle = "Rename session";
 	private static final String restartFrameTitle = "Please restart the application.";
 	private static final String restartFrameText = "Restart after session change";
-	private JComboBox<Session> referenceSession;
-	private JComboBox<Session> compareSession;
-	private JList compareList;
-	private Session rSession, cSession;
-	private Session currentSession;
 
-	public SessionsFrame() {
+	public CompareSessionsFrame() {
 		super(frameTitle);
-		setMinimumSize(new Dimension(800, 500));
+		setMinimumSize(new Dimension(800, 400));
 		setContentPane(createContent());
 	}
 
 	public void init() {
-		updateCurrentSession();
 		updateList();
+	}
+
+	public void saveChanges() {
+		new Thread(() -> {
+			try {
+				versioningService.commitCurrentChanges();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}).start();
 	}
 
 	private void close() {
@@ -68,34 +67,7 @@ public class SessionsFrame extends JFrame implements Progress {
 		panel.setBorder(BorderFactory.createEmptyBorder(15,15,15,15));
 		panel.setLayout(new MigLayout("gap 15px, wmin 400px, hmin 60px, fill", "[][grow][]", "[][][grow][]"));
 		panel.add(createSessionsView(), "span, wrap, grow");
-		panel.add(createCompareChoice(), "span, wrap");
-		panel.add(createCompareView(), "span, wrap, grow, push");
 		panel.add(createFooter(), "span");
-		return panel;
-	}
-
-	private Component createCompareView() {
-		compareList = new JList();
-		return scroll(compareList);
-	}
-
-	private Component createCompareChoice() {
-		JPanel panel = new JPanel();
-		referenceSession = new JComboBox<>();
-		referenceSession.addActionListener(e -> {
-			rSession = data.get(referenceSession.getSelectedIndex());
-			threadService.run(() -> updateCompareList());
-		});
-		compareSession = new JComboBox<>();
-		compareSession.addActionListener(e -> {
-			cSession = data.get(compareSession.getSelectedIndex());
-			threadService.run(() -> updateCompareList());
-		});
-		panel.add(new JLabel("Compare"));
-		panel.add(referenceSession);
-		panel.add(new JLabel("to"));
-		panel.add(compareSession);
-		panel.add(new JLabel(":"));
 		return panel;
 	}
 
@@ -113,22 +85,6 @@ public class SessionsFrame extends JFrame implements Progress {
 	private Component createSessionsList() {
 		sessionsList = new JList();
 		sessionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		sessionsList.setCellRenderer(new DefaultListCellRenderer(){
-			@Override
-			public Component getListCellRendererComponent(
-					JList<?> list,
-					Object value,
-					int index,
-					boolean isSelected,
-					boolean cellHasFocus)
-			{
-				Component comp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-				if(currentSession != null && currentSession.name.equals(((Session)value).name)) {
-					comp.setForeground(Color.blue);
-				}
-				return comp;
-			}
-		});
 		sessionsList.addListSelectionListener(e -> {
 			int selected = sessionsList.getSelectedIndex();
 			if (selected < 0 || selected >= data.size()) {
@@ -137,7 +93,12 @@ public class SessionsFrame extends JFrame implements Progress {
 				renameBtn.setEnabled(false);
 				return;
 			}
-			updateCurrentSession();
+			Session currentSession = null;
+			try {
+				currentSession = versioningService.getCurrentSession();
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
 			Session selectedSession = data.get(selected);
 			if (currentSession.name.equals(selectedSession.name)) {
 				restoreBtn.setEnabled(false);
@@ -150,14 +111,6 @@ public class SessionsFrame extends JFrame implements Progress {
 		});
 //		sessionsList.setCellRenderer(new SessionsRenderer());
 		return sessionsList;
-	}
-
-	private void updateCurrentSession() {
-		try {
-			currentSession = versioningService.getCurrentSession();
-		} catch (Exception e1) {
-			e1.printStackTrace();
-		}
 	}
 
 	private Component createFooter() {
@@ -230,19 +183,6 @@ public class SessionsFrame extends JFrame implements Progress {
 			data = versioningService.getSessions();
 			sessionsList.setListData(asVector(data));
 			sessionsList.setSelectedIndex(selected);
-			data.forEach(session -> {
-				referenceSession.addItem(session);
-				compareSession.addItem(session);
-			});
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void updateCompareList() {
-		try {
-			List<FileChange> changes = versioningService.getChanges(cSession, rSession);
-			if(changes != null) compareList.setListData(asVector(changes));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

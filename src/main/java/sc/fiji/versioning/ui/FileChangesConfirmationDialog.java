@@ -17,7 +17,7 @@ public class FileChangesConfirmationDialog extends JDialog {
 	public FileChangesConfirmationDialog(FilesCollection files) {
 		JPanel panel = new JPanel();
 		panel.setLayout(new MigLayout());
-		panel.add(createChangesPanel(files), "span, grow");
+		panel.add(new JScrollPane(createChangesPanel(files)), "span, grow");
 		panel.add(createFooter(), "south");
 		this.setContentPane(panel);
 		setModalityType(ModalityType.DOCUMENT_MODAL);

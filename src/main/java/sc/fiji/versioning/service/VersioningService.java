@@ -2,9 +2,6 @@ package sc.fiji.versioning.service;
 
 import net.imagej.ImageJService;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.scijava.command.CommandInfo;
-import org.scijava.plugin.Parameter;
-import org.scijava.plugin.PluginInfo;
 import sc.fiji.versioning.model.AppCommit;
 import sc.fiji.versioning.model.FileChange;
 import sc.fiji.versioning.model.Session;
@@ -12,9 +9,6 @@ import sc.fiji.versioning.model.Session;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
-import java.util.Vector;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Service for versioning an ImageJ installation.
@@ -124,4 +118,6 @@ public interface VersioningService extends ImageJService {
 	void importSessionFromFolder(File dir, String name) throws Exception;
 
 	void downloadFreshSession(String name) throws Exception;
+
+	List<FileChange> getChanges(Session rSession, Session cSession) throws Exception;
 }
